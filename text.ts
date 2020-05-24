@@ -40,7 +40,10 @@ class TextSprite extends Sprite {
 namespace textsprite {
     //% block="text sprite $text ||as $fg on $bg"
     //% blockId="textsprite_create"
-    //% blockSetVariable="text"
+    //% blockSetVariable="textSprite"
+    //% expandableArgumentMode="toggle"
+    //% bg.defl=0
+    //% fg.defl=1
     //% bg.shadow="colorindexpicker"
     //% fg.shadow="colorindexpicker"
     //% group="Create"
