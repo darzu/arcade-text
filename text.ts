@@ -6,6 +6,9 @@ class TextSprite extends Sprite {
         public bg: number,
         public fg: number,
         public font: image.Font,
+        public borderWidth: number,
+        public borderColor: number,
+        public padding: number,
         public icon: Image = null,
     ) {
         super(image.create(0,0));
@@ -15,16 +18,18 @@ class TextSprite extends Sprite {
     public update() {
         const iconWidth = this.icon ? this.icon.width : 0;
         const iconHeight = this.icon ? this.icon.height : 0;
-        const width = iconWidth + this.font.charWidth * this.text.length;
-        const height = Math.max(iconHeight, this.font.charHeight);
+        const borderAndPadding = this.borderWidth + this.padding
+        const width = iconWidth + this.font.charWidth * this.text.length + 2 * borderAndPadding;
+        const height = Math.max(iconHeight, this.font.charHeight) + 2 * borderAndPadding;
         const img = image.create(width, height);
-        img.fill(this.bg);
+        img.fill(this.borderColor);
+        img.fillRect(this.borderWidth, this.borderWidth, width - this.borderWidth * 2, height - this.borderWidth * 2, this.bg)
         if (this.icon) {
             const iconHeightOffset = (height - iconHeight) / 2
-            renderScaledImage(this.icon, img, 0, iconHeightOffset)
+            renderScaledImage(this.icon, img, borderAndPadding, iconHeightOffset)
         }
         const textHeightOffset = (height - this.font.charHeight) / 2
-        img.print(this.text, iconWidth, textHeightOffset, this.fg, this.font);
+        img.print(this.text, iconWidth + borderAndPadding, textHeightOffset, this.fg, this.font);
         this.setImage(img)        
     }
 
@@ -46,7 +51,15 @@ class TextSprite extends Sprite {
 
     //% block="set $this(textSprite) text $text"
     public setText(text: string) {
-        this.text = text
+        this.text = text || ""
+        this.update()
+    }
+
+    //% block="set $this(textSprite) border $width $color=colorindexpicker || and padding $padding"
+    public setBorder(width: number, color: number, padding: number = 0) {
+        this.borderWidth = Math.max(width, 0);
+        this.borderColor = color;
+        this.padding = Math.max(padding, 0);
         this.update()
     }
 }
@@ -108,7 +121,7 @@ namespace textsprite {
         fg: number = 1,
     ): TextSprite {
         const font = image.font8;
-        const sprite = new TextSprite(text, bg, fg, font);
+        const sprite = new TextSprite(text, bg, fg, font, 0, 0, 0);
         return sprite;
     }
 }
