@@ -1,50 +1,104 @@
+//% blockNamespace="textsprite"
+//% blockGap=8
 class TextSprite extends Sprite {
     constructor(
         public text: string,
         public bg: number,
         public fg: number,
         public font: image.Font,
+        public icon: Image = null,
     ) {
         super(image.create(0,0));
         this.update()
     }
 
     public update() {
-        const width = this.font.charWidth * this.text.length;
-        const height = this.font.charHeight;
+        const iconWidth = this.icon ? this.icon.width : 0;
+        const iconHeight = this.icon ? this.icon.height : 0;
+        const width = iconWidth + this.font.charWidth * this.text.length;
+        const height = Math.max(iconHeight, this.font.charHeight);
         const img = image.create(width, height);
         img.fill(this.bg);
-        img.print(this.text, 0, 0, this.fg, this.font);
+        if (this.icon) {
+            const iconHeightOffset = (height - iconHeight) / 2
+            renderScaledImage(this.icon, img, 0, iconHeightOffset)
+        }
+        const textHeightOffset = (height - this.font.charHeight) / 2
+        img.print(this.text, iconWidth, textHeightOffset, this.fg, this.font);
         this.setImage(img)        
+    }
+
+    //% block="set $this(textSprite) font height $height"
+    public setFontHeight(height: FontHeight) {
+        if (height % 8 === 0) {
+            this.font = image.scaledFont(image.font8, height / 8);
+        } else {
+            this.font = image.scaledFont(image.font5, height / 5);
+        }
+        this.update();
+    }
+
+    //% block="set $this(textSprite) icon $icon=screen_image_picker"
+    public setIcon(icon: Image) {
+        this.icon = icon
+        this.update()
+    }
+
+    //% block="set $this(textSprite) text $text"
+    public setText(text: string) {
+        this.text = text
+        this.update()
     }
 }
 
-// //% block
-// export function createTextSprite(text: string, bg: number, fg: number) {
-//     const font = image.font8;
-//     const width = font.charWidth * text.length;
-//     const height = font.charHeight;
+// TODO: downscale and upscale icons?
+function renderScaledImage(source: Image, destination: Image, x: number, y: number, downScalePowerOfTwo: number = 0) {
+    const scale = downScalePowerOfTwo;
+    const tile = source
+    for (let i = 0; i < source.width; i += 1 << scale) {
+        for (let j = 0; j < source.height; j += 1 << scale) {
+            if (source.getPixel(i, j) != 0) {
+                destination.setPixel(x + (i >> scale), y + (j >> scale), source.getPixel(i, j))
+            }
+        }
+    }
+}
 
-//     const res = image.create(width, height);
-//     res.fill(bg);
-//     res.print(text, 0, 0, fg, font);
-
-//     const sprite = sprites.create(res, SpriteKind.Food);
-//     return sprite;
-// }
+enum FontHeight {
+    Five = 5,
+    Eight = 8,
+    Ten = 10,
+    Fifteen = 15,
+    Sixteen = 16,
+    Twenty = 20,
+    Twentyfour = 24,
+    TwentyFive = 25,
+    Thirty = 30,
+    ThirtyTwo = 32,
+    ThirtyFive = 35,
+    Forty = 40,
+    FortyFive = 45,
+    FortyEight = 48,
+    Fifty = 50,
+    FiftyFive = 55,
+    FiftySix = 56,
+    Sixty = 60,
+    SixtyFour = 64
+}
 
 //% color=#3e99de
 //% icon="\uf031"
 //% blockGap=8 block="Text Sprite"
 //% groups='["Create"]'
 namespace textsprite {
-    //% block="text sprite $text ||as $fg on $bg"
+
+    //% block="text sprite $text || as $fg on $bg"
     //% blockId="textsprite_create"
     //% blockSetVariable="textSprite"
     //% expandableArgumentMode="toggle"
     //% bg.defl=0
-    //% fg.defl=1
     //% bg.shadow="colorindexpicker"
+    //% fg.defl=1
     //% fg.shadow="colorindexpicker"
     //% group="Create"
     //% weight=100
