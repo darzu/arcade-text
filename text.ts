@@ -1,3 +1,8 @@
+namespace SpriteKind {
+    //% isKind
+    export const Text = SpriteKind.create();
+}
+
 //% blockNamespace="textsprite"
 //% blockGap=8
 class TextSprite extends Sprite {
@@ -12,6 +17,7 @@ class TextSprite extends Sprite {
         public icon: Image = null,
     ) {
         super(image.create(0,0));
+        this.setKind(SpriteKind.Text);
         this.update()
     }
 
