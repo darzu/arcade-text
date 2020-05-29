@@ -3,6 +3,18 @@ namespace SpriteKind {
     export const Text = SpriteKind.create();
 }
 
+function getFontForTextAndHeight(text: string, maxHeight: number): image.Font {
+    const baseFont = image.getFontForText(text)
+    const hasUnicode = baseFont.charHeight === 12  // this is a hack
+    const availableFonts: image.Font[] = hasUnicode 
+        ? [baseFont] 
+        : [image.font8, image.font5] // 8 and 5 are generally better fonts than 12
+    const remainders = availableFonts.map(s => maxHeight % s.charHeight)
+    const fontIdx = remainders.reduce((p, n, i) => remainders[p] <= n ? p : i, 99)
+    const font = availableFonts[fontIdx]
+    return image.scaledFont(font, maxHeight / font.charHeight)
+}
+
 //% blockNamespace="textsprite"
 //% blockGap=8
 class TextSprite extends Sprite {
@@ -10,7 +22,7 @@ class TextSprite extends Sprite {
         public text: string,
         public bg: number,
         public fg: number,
-        public font: image.Font,
+        public maxFontHeight: number,
         public borderWidth: number,
         public borderColor: number,
         public padding: number,
@@ -24,9 +36,10 @@ class TextSprite extends Sprite {
     public update() {
         const iconWidth = this.icon ? this.icon.width : 0;
         const iconHeight = this.icon ? this.icon.height : 0;
-        const borderAndPadding = this.borderWidth + this.padding
-        const width = iconWidth + this.font.charWidth * this.text.length + 2 * borderAndPadding;
-        const height = Math.max(iconHeight, this.font.charHeight) + 2 * borderAndPadding;
+        const borderAndPadding = this.borderWidth + this.padding;
+        const font = getFontForTextAndHeight(this.text, this.maxFontHeight);        
+        const width = iconWidth + font.charWidth * this.text.length + 2 * borderAndPadding;
+        const height = Math.max(iconHeight, font.charHeight) + 2 * borderAndPadding;
         const img = image.create(width, height);
         img.fill(this.borderColor);
         img.fillRect(this.borderWidth, this.borderWidth, width - this.borderWidth * 2, height - this.borderWidth * 2, this.bg)
@@ -34,18 +47,14 @@ class TextSprite extends Sprite {
             const iconHeightOffset = (height - iconHeight) / 2
             renderScaledImage(this.icon, img, borderAndPadding, iconHeightOffset)
         }
-        const textHeightOffset = (height - this.font.charHeight) / 2
-        img.print(this.text, iconWidth + borderAndPadding, textHeightOffset, this.fg, this.font);
+        const textHeightOffset = (height - font.charHeight) / 2
+        img.print(this.text, iconWidth + borderAndPadding, textHeightOffset, this.fg, font);
         this.setImage(img)        
     }
 
-    //% block="set $this(textSprite) font height $height"
-    public setFontHeight(height: FontHeight) {
-        if (height % 8 === 0) {
-            this.font = image.scaledFont(image.font8, height / 8);
-        } else {
-            this.font = image.scaledFont(image.font5, height / 5);
-        }
+    //% block="set $this(textSprite) max font height $height"
+    public setMaxFontHeight(height: number) {
+        this.maxFontHeight = height
         this.update();
     }
 
@@ -83,28 +92,6 @@ function renderScaledImage(source: Image, destination: Image, x: number, y: numb
     }
 }
 
-enum FontHeight {
-    Five = 5,
-    Eight = 8,
-    Ten = 10,
-    Fifteen = 15,
-    Sixteen = 16,
-    Twenty = 20,
-    Twentyfour = 24,
-    TwentyFive = 25,
-    Thirty = 30,
-    ThirtyTwo = 32,
-    ThirtyFive = 35,
-    Forty = 40,
-    FortyFive = 45,
-    FortyEight = 48,
-    Fifty = 50,
-    FiftyFive = 55,
-    FiftySix = 56,
-    Sixty = 60,
-    SixtyFour = 64
-}
-
 //% color=#3e99de
 //% icon="\uf031"
 //% blockGap=8 block="Text Sprite"
@@ -126,8 +113,7 @@ namespace textsprite {
         bg: number = 0,
         fg: number = 1,
     ): TextSprite {
-        const font = image.font8;
-        const sprite = new TextSprite(text, bg, fg, font, 0, 0, 0);
+        const sprite = new TextSprite(text, bg, fg, 12, 0, 0, 0);
         return sprite;
     }
 }
